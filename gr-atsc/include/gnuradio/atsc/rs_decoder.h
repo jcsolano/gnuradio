@@ -67,6 +67,10 @@ public:
   void reset() { /* nop */ }
 
 private:
+  int nerrors_corrrected_count;
+  int bad_packet_count;
+  int total_packets;
+  int reset_counter;
   void *d_rs;
 };
 

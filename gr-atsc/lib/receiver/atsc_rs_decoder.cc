@@ -29,6 +29,8 @@
 #include <gnuradio/atsc/consts.h>
 #include <assert.h>
 
+#include <iostream>
+
 static const int rs_init_symsize =     8;
 static const int rs_init_gfpoly  = 0x11d;
 static const int rs_init_fcr     =     0;	// first consecutive root
@@ -53,6 +55,10 @@ atsc_rs_decoder::atsc_rs_decoder()
 {
   d_rs = init_rs_char (rs_init_symsize, rs_init_gfpoly, rs_init_fcr, rs_init_prim, rs_init_nroots);
   assert (d_rs != 0);
+  nerrors_corrrected_count = 0;
+  bad_packet_count = 0;
+  total_packets = 0;
+  reset_counter = 0;
   reset();
 }
 
@@ -97,6 +103,22 @@ atsc_rs_decoder::work (int noutput_items,
 
     int nerrors_corrrected = decode(out[i], in[i]);
     out[i].pli.set_transport_error(nerrors_corrrected == -1);
+    if( nerrors_corrrected == -1 )
+      bad_packet_count++;
+    else
+      nerrors_corrrected_count += nerrors_corrrected;
+  }
+
+  total_packets += noutput_items;
+  reset_counter++;
+
+  if( reset_counter > 100 )
+  {
+    std::cout << "Error rate: " << (float)nerrors_corrrected_count/total_packets << "\tPacket error rate: " << (float)bad_packet_count/total_packets << std::endl;
+    nerrors_corrrected_count = 0;
+    bad_packet_count = 0;
+    total_packets = 0;
+    reset_counter = 0;
   }
 
   return noutput_items;
